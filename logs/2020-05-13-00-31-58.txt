@@ -1,0 +1,188 @@
+from simulator import get_sensors, move_forward, move_backward, turn_left, turn_right, submit, set_map
+# DO NOT MODIFY LINE 1
+# You may import any libraries you want. But you may not import simulator_hidden
+
+# Colors
+black = (0,0,0)
+white = (255,255,255)
+gray = (100,100,100)
+blue = (0,180,255)
+
+##############################
+#### Write your code here ####
+##############################
+def add(a,b):
+	return ((a[0]+b[0],a[1]+b[1]))
+
+N=(0,-1)
+E=(1,0)
+S=(0,1)
+W=(-1,0)
+lakes=[]
+buildings=[]
+
+class robot() :
+	def __init__(self,mv,av,pos=(0,0),dir=S,stack=0):
+		self.mv = mv
+		self.av = av
+		self.pos = pos
+		self.dir = dir
+		self.stack = stack
+
+	def seeright(self) :
+		turn_right(int(self.av/2))
+		if self.dir == E:
+			self.dir = S
+		elif self.dir == S:
+			self.dir = W
+		elif self.dir == W:
+			self.dir = N
+		elif self.dir == N:
+			self.dir = E
+
+	def seeleft(self) :
+		turn_left(int(self.av/2))
+		if self.dir == E:
+			self.dir = N
+		elif self.dir== N:
+			self.dir = W
+		elif self.dir == W:
+			self.dir = S
+		elif self.dir == S:
+			self.dir = E
+	def seeEast(self) :
+		if self.dir==W:
+			self.seeback()
+		elif self.dir == N:
+			self.seeright()
+		elif self.dir == S:
+			self.seeleft()
+		elif self.dir == E:
+			return
+	def seeWest(self):
+		if self.dir==E:
+			self.seeback()
+		elif self.dir == N:
+			self.seeleft()
+		elif self.dir == S:
+			self.seeright()
+		elif self.dir == W:
+			return
+
+	def seeback(self) :
+		self.seeleft()
+		self.seeleft()
+
+	def move(self):
+		for i in range(self.mv):
+			move_forward()
+			if get_sensors()[0][1]==black:
+				move_backward(i+1)
+				return False
+		if get_sensors()[0][1] == blue and add(self.pos,self.dir) not in lakes:
+			lakes.append(add(self.pos,self.dir))
+		self.pos=add(self.pos,self.dir)
+		print((self.pos),(self.dir))
+		return True
+
+	def check(self):
+		if -1<get_sensors()[1]<=4:
+			print(1)
+			buildings.append(add(self.pos,self.dir))
+			self.stack += 1
+			if self.dir == S and self.stack==1:
+				self.seeEast()
+				self.check()
+				self.move()
+				self.seeright()
+				self.check()
+				self.move()
+				self.check()
+				if self.move()==False:
+					self.seeback()
+					
+					self.check()
+					self.stack=0
+
+					return
+
+				self.seeWest()
+				self.check()
+				self.move()
+				self.seeleft()
+				self.stack =0
+				self.check()
+			if self.dir == N and self.stack==1:
+				self.seeEast()
+				self.check()
+				self.move()
+				self.seeleft()
+				self.check()
+				self.move()
+				self.check()
+				if self.move()==False:
+					self.seeback()
+					self.check
+					return
+				self.seeWest()
+				self.check
+				self.move()
+				self.seeright()
+				self.stack=0
+				self.check()
+				
+set_map((10,4), [(8,0), (4,9), (2,0), (3,3), (4,1)], [(0,1), (0,3), (2,3)])
+
+A=robot(45,180)
+while len(lakes)!=5 or len(buildings)!=5:
+	A.check()
+	if A.move() == False:
+		A.seeEast()
+		A.check()
+		A.move()
+		if A.pos[1]==0:
+			A.seeright()
+		else:
+			A.seeleft()
+while A.pos[0]!=0:
+	A.seeWest()
+	A.seeright()
+	if -1<get_sensors()[1]<4:
+		A.seeWest()
+		A.move()
+		A.seeright()
+	if A.move() == False:
+		break
+while A.pos!=(0,0):
+	A.seeWest()
+	if -1<get_sensors()[1]<4:
+		A.seeleft()
+		A.move()
+		A.seeright()
+		A.move()
+		A.move()
+		A.seeright()
+		A.move()
+		A.seeleft()
+	if A.move() == False:
+		break
+submit()
+
+
+
+
+
+
+#### If you want to try moving around the map with your keyboard, uncomment the below lines 
+import pygame
+while True:
+	pressed = pygame.key.get_pressed()
+	if pressed[pygame.K_UP]: move_forward()
+	if pressed[pygame.K_DOWN]: move_backward()
+	if pressed[pygame.K_LEFT]: turn_left()
+	if pressed[pygame.K_RIGHT]: turn_right()
+	if pressed[pygame.K_n]: set_map((10,5), [(8,0), (4,9), (2,0), (3,3), (4,1)], [(7,2), (0,1), (2,3)])
+	if pressed[pygame.K_c]: print(get_sensors())
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			exit("Closing...")
